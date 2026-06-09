@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Dining Door — Food · Social · Delivery</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    body { background: var(--white); }
+    /* HERO */
+    .hero { background: var(--dark); min-height: 92vh; display: flex; align-items: center; position: relative; overflow: hidden; }
+    .hero::before { content:''; position:absolute; top:-200px; right:-200px; width:600px; height:600px; background: radial-gradient(circle, rgba(255,107,53,0.12) 0%, transparent 70%); pointer-events:none; }
+    .hero-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: center; }
+    .hero-badge { display:inline-flex; align-items:center; gap:0.4rem; background:#1e293b; border:1px solid var(--orange); padding:0.3rem 0.9rem; border-radius:20px; font-size:0.82rem; color:var(--orange); margin-bottom:1.5rem; }
+    .hero h1 { font-size: 3.2rem; font-weight: 800; line-height: 1.1; color: var(--white); margin-bottom: 1rem; }
+    .hero h1 span { color: var(--orange); }
+    .hero p { color: #94a3b8; font-size: 1.05rem; margin-bottom: 2rem; max-width: 480px; }
+    .hero-actions { display: flex; gap: 1rem; flex-wrap: wrap; }
+    .hero-stats { display: flex; gap: 2rem; margin-top: 2.5rem; }
+    .hero-stat strong { display:block; font-size:1.6rem; color:var(--white); }
+    .hero-stat span { font-size: 0.82rem; color: #64748b; }
+    /* APP PREVIEW CARD */
+    .app-preview { background: #1e293b; border-radius: 16px; border: 1px solid #334155; overflow: hidden; box-shadow: 0 24px 60px rgba(0,0,0,0.4); }
+    .browser-bar { background: #0f172a; padding: 0.6rem 1rem; display: flex; align-items: center; gap: 0.5rem; }
+    .browser-dot { width:10px; height:10px; border-radius:50%; }
+    .url-bar { flex:1; background:#1e293b; border-radius:6px; padding:0.2rem 0.8rem; font-size:0.75rem; color:#475569; margin: 0 0.5rem; }
+    .preview-content { padding: 1rem; display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; }
+    .mini-map { background: linear-gradient(135deg,#1a2a1a,#1e3a1e); border-radius:8px; height:200px; display:flex; align-items:center; justify-content:center; font-size:1.8rem; flex-direction:column; gap:0.3rem; color:#4ade80; font-size:0.85rem; }
+    .mini-cards { display: flex; flex-direction: column; gap: 0.6rem; }
+    .mini-card { background:#0f172a; border-radius:8px; padding:0.7rem; border-left:3px solid var(--orange); }
+    .mini-card p { font-size:0.72rem; color:#94a3b8; margin-top:2px; }
+    .mini-card strong { font-size:0.82rem; color:var(--white); }
+    /* FEATURES */
+    .features { padding: 5rem 0; background: var(--light); }
+    .section-title { text-align:center; margin-bottom:3rem; }
+    .section-title h2 { font-size:2rem; color:var(--dark); }
+    .section-title p  { color:var(--mid); margin-top:0.5rem; }
+    .feature-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 1.5rem; }
+    .feature-card { background:var(--white); border-radius:var(--radius); padding:1.8rem; border:1px solid var(--border); transition:transform .2s, box-shadow .2s; }
+    .feature-card:hover { transform:translateY(-4px); box-shadow:0 8px 24px rgba(0,0,0,0.1); }
+    .feature-icon { width:52px; height:52px; border-radius:12px; background:#fff0eb; display:flex; align-items:center; justify-content:center; font-size:1.5rem; margin-bottom:1rem; }
+    .feature-card h3 { font-size:1rem; margin-bottom:0.5rem; }
+    .feature-card p  { font-size:0.88rem; color:var(--mid); }
+    /* HOW IT WORKS */
+    .how-it-works { padding: 5rem 0; }
+    .steps { display:grid; grid-template-columns:repeat(4,1fr); gap:1rem; margin-top:2rem; }
+    .step { text-align:center; padding:1.5rem 1rem; }
+    .step-num { width:44px; height:44px; border-radius:50%; background:var(--orange); color:var(--white); font-weight:700; display:flex; align-items:center; justify-content:center; margin:0 auto 1rem; font-size:1.1rem; }
+    .step h4 { font-size:0.95rem; margin-bottom:0.4rem; }
+    .step p  { font-size:0.82rem; color:var(--mid); }
+    /* CTA */
+    .cta { background: var(--dark); padding: 4rem 0; text-align: center; }
+    .cta h2 { color:var(--white); font-size:1.8rem; margin-bottom:0.8rem; }
+    .cta p  { color:#94a3b8; margin-bottom:2rem; }
+    /* FOOTER */
+    footer { background:#0d111a; color:#475569; padding:2rem 0; text-align:center; font-size:0.85rem; }
+    footer a { color:#64748b; text-decoration:none; }
+  </style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar">
+  <a href="index.html" class="logo">🍽 The Dining<span> Door</span></a>
+  <ul class="nav-links">
+    <li><a href="#features">Features</a></li>
+    <li><a href="#how">How It Works</a></li>
+    <li><a href="pages/login.html">For Restaurants</a></li>
+  </ul>
+  <div class="nav-actions">
+    <a href="pages/login.html" class="btn btn-outline btn-sm">Login</a>
+    <a href="pages/register.html" class="btn btn-primary btn-sm">Sign Up</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="container">
+    <div class="hero-grid">
+      <div>
+        <div class="hero-badge">🚀 Now Live in Korea</div>
+        <h1>Order. Connect.<br><span>Discover.</span></h1>
+        <p>Korea's first food delivery platform with real-time social features, live kitchen status, and short video ads.</p>
+        <div class="hero-actions">
+          <a href="pages/register.html" class="btn btn-primary btn-lg">Get Started →</a>
+          <a href="pages/home.html" class="btn btn-outline btn-lg">Browse Restaurants</a>
+        </div>
+        <div class="hero-stats">
+          <div class="hero-stat"><strong>500+</strong><span>Restaurants</span></div>
+          <div class="hero-stat"><strong>20K+</strong><span>Customers</span></div>
+          <div class="hero-stat"><strong>4.8 ★</strong><span>Rating</span></div>
+        </div>
+      </div>
+      <div class="app-preview">
+        <div class="browser-bar">
+          <div class="browser-dot" style="background:#ff5f56"></div>
+          <div class="browser-dot" style="background:#ffbd2e"></div>
+          <div class="browser-dot" style="background:#27c93f"></div>
+          <div class="url-bar">thediningdoor.com/home</div>
+        </div>
+        <div class="preview-content">
+          <div class="mini-map">
+            <span style="font-size:2rem">🗺</span>
+            <span>Live Map View</span>
+            <span style="color:#64748b;font-size:0.72rem">Naju, South Korea</span>
+          </div>
+          <div class="mini-cards">
+            <div class="mini-card">
+              <strong>🟢 Kitchen: Preparing</strong>
+              <p>Seoul BBQ · Updated 10s ago</p>
+            </div>
+            <div class="mini-card" style="border-color:var(--blue)">
+              <strong style="color:var(--white)">⭐ 4.8 · Mandu House</strong>
+              <p>1.2km away · 20-30 min</p>
+            </div>
+            <div class="mini-card" style="border-color:var(--green)">
+              <strong style="color:var(--white)">💬 New Message</strong>
+              <p>Owner: Ready in 5 min!</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section class="features" id="features">
+  <div class="container">
+    <div class="section-title">
+      <h2>Everything in one platform</h2>
+      <p>Designed for customers, restaurants, and delivery — all in one place.</p>
+    </div>
+    <div class="feature-grid">
+      <div class="feature-card">
+        <div class="feature-icon">🗺</div>
+        <h3>Map-Based Discovery</h3>
+        <p>Browse nearby restaurants on an interactive Kakao/Google Map with live pins and distance information.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🔄</div>
+        <h3>Live Kitchen Status</h3>
+        <p>Restaurant owners update preparation stages in real time. Customers see exactly what's happening to their order.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">💬</div>
+        <h3>Real-Time Messaging</h3>
+        <p>Direct WebSocket-powered chat between customers and restaurant owners. No phone calls needed.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📹</div>
+        <h3>Video Ads</h3>
+        <p>Restaurants post short 60-second promotional videos. Customers watch before they order.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🚴</div>
+        <h3>Integrated Delivery</h3>
+        <p>Delivery personnel receive assignments, navigate via map, and complete the loop from pickup to drop-off.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">⭐</div>
+        <h3>Verified Reviews</h3>
+        <p>Ratings are only unlocked after a completed order. No fake reviews — every star is earned.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="how-it-works" id="how">
+  <div class="container">
+    <div class="section-title">
+      <h2>How it works</h2>
+      <p>Order food in four simple steps.</p>
+    </div>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <h4>Browse the Map</h4>
+        <p>Find restaurants near you using our live interactive map.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <h4>Choose & Order</h4>
+        <p>Browse menus, watch video ads, and place your order in seconds.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <h4>Track Live</h4>
+        <p>See real-time kitchen status and delivery location updates.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <h4>Rate & Review</h4>
+        <p>Share your experience after delivery to help others discover great food.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta">
+  <div class="container">
+    <h2>Ready to order smarter?</h2>
+    <p>Join thousands of customers and restaurants already on The Dining Door.</p>
+    <div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap">
+      <a href="pages/register.html?role=customer" class="btn btn-primary btn-lg">I'm a Customer</a>
+      <a href="pages/register.html?role=owner" class="btn btn-outline btn-lg">I'm a Restaurant Owner</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="container">
+    <p>© 2024 The Dining Door · Dongshin University · Master Software Design I ·
+      <a href="#">Privacy Policy</a> · <a href="#">Terms of Service</a>
+    </p>
+  </div>
+</footer>
+
+</body>
+</html>

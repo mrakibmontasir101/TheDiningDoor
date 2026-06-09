@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Messages — The Dining Door</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <style>
+    body { background: var(--light); }
+    .chat-layout { display: grid; grid-template-columns: 300px 1fr; height: calc(100vh - 60px); }
+    .chat-sidebar { background: var(--white); border-right: 1px solid var(--border); display: flex; flex-direction: column; }
+    .chat-sidebar-header { padding: 1rem; border-bottom: 1px solid var(--border); font-weight: 700; }
+    .conv-list { flex: 1; overflow-y: auto; }
+    .conv-item { padding: 0.9rem 1rem; display: flex; gap: 0.8rem; cursor: pointer; border-bottom: 1px solid var(--border); transition: background .15s; }
+    .conv-item:hover, .conv-item.active { background: var(--light); }
+    .conv-item.active { border-left: 3px solid var(--orange); }
+    .conv-avatar { width: 44px; height: 44px; border-radius: 50%; background: #fff0eb; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; flex-shrink: 0; }
+    .conv-info { flex: 1; min-width: 0; }
+    .conv-info .conv-name { font-size: 0.9rem; font-weight: 600; margin-bottom: 0.2rem; }
+    .conv-info .conv-preview { font-size: 0.78rem; color: var(--mid); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .conv-meta { display: flex; flex-direction: column; align-items: flex-end; gap: 0.3rem; }
+    .conv-meta .time { font-size: 0.72rem; color: var(--mid); }
+    .unread { background: var(--orange); color: var(--white); border-radius: 50%; width: 18px; height: 18px; font-size: 0.7rem; display: flex; align-items: center; justify-content: center; font-weight: 700; }
+    /* Chat main */
+    .chat-main { display: flex; flex-direction: column; }
+    .chat-topbar { padding: 0.9rem 1.2rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 0.8rem; background: var(--white); }
+    .chat-topbar .chat-avatar { width: 40px; height: 40px; border-radius: 50%; background: #fff0eb; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
+    .chat-topbar .chat-name { font-weight: 700; font-size: 0.95rem; }
+    .chat-topbar .chat-status { font-size: 0.78rem; color: var(--mid); }
+    .messages-area { flex: 1; overflow-y: auto; padding: 1.2rem; background: var(--light); display: flex; flex-direction: column; gap: 0.6rem; }
+    .chat-input-area { padding: 1rem; border-top: 1px solid var(--border); background: var(--white); display: flex; gap: 0.6rem; }
+    .chat-input-area input { flex: 1; }
+    .no-conv { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--mid); gap: 0.5rem; }
+  </style>
+</head>
+<body>
+<nav class="navbar">
+  <a href="../index.html" class="logo">🍽 The Dining<span> Door</span></a>
+  <ul class="nav-links">
+    <li><a href="home.html">Restaurants</a></li>
+    <li><a href="orders.html">My Orders</a></li>
+    <li><a href="messages.html" class="active">Messages</a></li>
+  </ul>
+  <div class="nav-actions">
+    <a href="login.html" class="btn btn-outline btn-sm">Logout</a>
+  </div>
+</nav>
+
+<div class="chat-layout">
+  <!-- SIDEBAR -->
+  <div class="chat-sidebar">
+    <div class="chat-sidebar-header">Messages</div>
+    <div class="conv-list" id="convList"></div>
+  </div>
+
+  <!-- CHAT MAIN -->
+  <div class="chat-main" id="chatMain">
+    <div class="no-conv">
+      <div style="font-size:3rem">💬</div>
+      <strong>Your Messages</strong>
+      <p style="font-size:0.85rem">Select a conversation to start chatting</p>
+    </div>
+  </div>
+</div>
+
+<script>
+const CONVERSATIONS = [
+  { id:1, name:'Seoul BBQ', icon:'🥩', preview:'Almost! 5 more minutes.', time:'2:15 PM', unread:0,
+    messages:[
+      { from:'them', text:'Hello! Is my order placed?', time:'2:10 PM' },
+      { from:'me',   text:'Yes! We received your order #1044.', time:'2:11 PM' },
+      { from:'them', text:'How long will it take?', time:'2:13 PM' },
+      { from:'me',   text:'Almost! 5 more minutes.', time:'2:15 PM' },
+    ]},
+  { id:2, name:'Mandu House', icon:'🥟', preview:'Thank you for your order!', time:'1:45 PM', unread:2,
+    messages:[
+      { from:'me',   text:'Hi, I placed an order. When will it be ready?', time:'1:40 PM' },
+      { from:'them', text:'Thank you for your order!', time:'1:41 PM' },
+      { from:'them', text:'We will start preparing in 2 minutes.', time:'1:45 PM' },
+    ]},
+  { id:3, name:'Ramen Co.', icon:'🍜', preview:'Your order is out for delivery!', time:'Yesterday', unread:0,
+    messages:[
+      { from:'them', text:'Your order is out for delivery!', time:'Yesterday 6:30 PM' },
+      { from:'me',   text:'Great, thank you!', time:'Yesterday 6:31 PM' },
+    ]},
+];
+
+let activeConv = null;
+
+function renderConvList() {
+  const list = document.getElementById('convList');
+  list.innerHTML = CONVERSATIONS.map(c => `
+    <div class="conv-item ${activeConv===c.id?'active':''}" onclick="openConv(${c.id})">
+      <div class="conv-avatar">${c.icon}</div>
+      <div class="conv-info">
+        <div class="conv-name">${c.name}</div>
+        <div class="conv-preview">${c.preview}</div>
+      </div>
+      <div class="conv-meta">
+        <span class="time">${c.time}</span>
+        ${c.unread ? `<span class="unread">${c.unread}</span>` : ''}
+      </div>
+    </div>`).join('');
+}
+
+function openConv(id) {
+  activeConv = id;
+  const conv = CONVERSATIONS.find(c => c.id === id);
+  conv.unread = 0;
+  renderConvList();
+
+  document.getElementById('chatMain').innerHTML = `
+    <div class="chat-topbar">
+      <div class="chat-avatar">${conv.icon}</div>
+      <div>
+        <div class="chat-name">${conv.name}</div>
+        <div class="chat-status"><span class="status-dot green"></span>Online</div>
+      </div>
+      <div style="margin-left:auto;display:flex;gap:0.5rem">
+        <button class="btn btn-gray btn-sm">📞 Call</button>
+        <button class="btn btn-gray btn-sm">ℹ️ Info</button>
+      </div>
+    </div>
+    <div class="messages-area" id="msgArea">
+      ${conv.messages.map(m => `
+        <div class="msg ${m.from==='me'?'sent':'received'}">
+          ${m.text}
+          <div class="msg-time">${m.time}</div>
+        </div>`).join('')}
+    </div>
+    <div class="chat-input-area">
+      <input type="text" class="form-control" id="msgInput" placeholder="Type a message..." onkeypress="if(event.key==='Enter')sendMsg(${id})">
+      <button class="btn btn-gray btn-sm" onclick="document.getElementById('msgInput').value += ' 😊'">😊</button>
+      <button class="btn btn-primary btn-sm" onclick="sendMsg(${id})">Send</button>
+    </div>`;
+
+  const area = document.getElementById('msgArea');
+  if (area) area.scrollTop = area.scrollHeight;
+}
+
+function sendMsg(convId) {
+  const input = document.getElementById('msgInput');
+  if (!input.value.trim()) return;
+  const conv = CONVERSATIONS.find(c => c.id === convId);
+  const now = new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
+  conv.messages.push({ from:'me', text: input.value, time: now });
+  conv.preview = input.value;
+  input.value = '';
+  openConv(convId);
+  // Simulate reply after 1.5s
+  setTimeout(() => {
+    const replies = ['Got it!', 'Thank you!', 'We will let you know shortly.', 'Order is being prepared now.'];
+    conv.messages.push({ from:'them', text: replies[Math.floor(Math.random()*replies.length)], time: new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'}) });
+    openConv(convId);
+  }, 1500);
+}
+
+renderConvList();
+</script>
+</body>
+</html>
