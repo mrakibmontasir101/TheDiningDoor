@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard — The Dining Door</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <style>
+    body { background: var(--light); }
+    .dash-layout { display: grid; grid-template-columns: 220px 1fr; min-height: calc(100vh - 60px); }
+    .sidebar { background: var(--dark); padding: 1.5rem 0; }
+    .sidebar-label { padding: 0.5rem 1.5rem; font-size: 0.72rem; color: #334155; text-transform: uppercase; letter-spacing: 0.08em; }
+    .sidebar-item { padding: 0.75rem 1.5rem; display: flex; align-items: center; gap: 0.8rem; color: #64748b; font-size: 0.88rem; cursor: pointer; transition: all .2s; text-decoration: none; border-left: 3px solid transparent; }
+    .sidebar-item:hover, .sidebar-item.active { background: #1e293b; color: var(--white); border-left-color: var(--orange); }
+    .sidebar-item .icon { font-size: 1rem; }
+    .sidebar-divider { height: 1px; background: #1e293b; margin: 0.8rem 0; }
+    .main { padding: 2rem; overflow-y: auto; }
+    .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+    .page-header h1 { font-size: 1.4rem; }
+    .stats-row { display: grid; grid-template-columns: repeat(4,1fr); gap: 1rem; margin-bottom: 1.5rem; }
+    /* Tabs */
+    .tab-bar { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; border-bottom: 2px solid var(--border); padding-bottom: 0; }
+    .tab-btn { padding: 0.6rem 1.2rem; border: none; background: none; font-size: 0.9rem; font-weight: 600; color: var(--mid); cursor: pointer; border-bottom: 3px solid transparent; margin-bottom: -2px; transition: all .2s; }
+    .tab-btn.active { color: var(--orange); border-bottom-color: var(--orange); }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    /* Search bar */
+    .search-row { display: flex; gap: 0.8rem; margin-bottom: 1rem; }
+    .search-row input { flex: 1; }
+    /* Action buttons in table */
+    .action-btns { display: flex; gap: 0.4rem; }
+    /* Modal */
+    .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 200; align-items: center; justify-content: center; }
+    .modal.open { display: flex; }
+    .modal-box { background: var(--white); border-radius: 14px; padding: 2rem; width: 480px; max-width: 90vw; }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.2rem; }
+    .modal-header h3 { font-size: 1.1rem; }
+    .close-modal { background: none; border: none; font-size: 1.2rem; cursor: pointer; color: var(--mid); }
+    /* Status colors */
+    .status-active { color: var(--green); font-weight: 600; }
+    .status-blocked { color: var(--red); font-weight: 600; }
+  </style>
+</head>
+<body>
+
+<nav class="navbar">
+  <a href="../index.html" class="logo">🍽 The Dining<span> Door</span></a>
+  <div class="nav-actions">
+    <span style="color:#94a3b8;font-size:0.85rem">⚙️ Admin Panel</span>
+    <a href="login.html" class="btn btn-outline btn-sm" style="margin-left:1rem">Logout</a>
+  </div>
+</nav>
+
+<div class="dash-layout">
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sidebar-label">Management</div>
+    <a class="sidebar-item active" onclick="showTab('overview')"><span class="icon">📊</span> Overview</a>
+    <a class="sidebar-item" onclick="showTab('users')"><span class="icon">👥</span> Users</a>
+    <a class="sidebar-item" onclick="showTab('restaurants')"><span class="icon">🍽</span> Restaurants</a>
+    <a class="sidebar-item" onclick="showTab('orders')"><span class="icon">📦</span> Orders</a>
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-label">System</div>
+    <a class="sidebar-item" onclick="showTab('videos')"><span class="icon">📹</span> Video Ads</a>
+    <a class="sidebar-item" onclick="showTab('reports')"><span class="icon">📈</span> Reports</a>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+
+    <!-- OVERVIEW TAB -->
+    <div class="tab-content active" id="tab-overview">
+      <div class="page-header">
+        <h1>Admin Dashboard</h1>
+        <span class="badge badge-green">🟢 System Online</span>
+      </div>
+      <div class="stats-row">
+        <div class="stat-card"><div class="stat-value">248</div><div class="stat-label">Total Users</div></div>
+        <div class="stat-card" style="border-color:var(--green)"><div class="stat-value">42</div><div class="stat-label">Restaurants</div></div>
+        <div class="stat-card" style="border-color:var(--blue)"><div class="stat-value">1,284</div><div class="stat-label">Total Orders</div></div>
+        <div class="stat-card" style="border-color:#a855f7"><div class="stat-value">₩8.4M</div><div class="stat-label">Total Revenue</div></div>
+      </div>
+      <!-- Recent activity -->
+      <div class="card">
+        <div class="card-header">Recent Activity</div>
+        <div class="card-body" style="padding:0">
+          <table>
+            <thead><tr><th>Time</th><th>Event</th><th>User</th><th>Status</th></tr></thead>
+            <tbody id="activityLog"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- USERS TAB -->
+    <div class="tab-content" id="tab-users">
+      <div class="page-header">
+        <h1>User Management</h1>
+        <button class="btn btn-primary btn-sm" onclick="openModal('addUserModal')">+ Add User</button>
+      </div>
+      <div class="search-row">
+        <input type="text" class="form-control" id="userSearch" placeholder="Search by name or email..." oninput="filterUsers()">
+        <select class="form-control" id="roleFilter" onchange="filterUsers()" style="width:160px">
+          <option value="">All Roles</option>
+          <option value="customer">Customer</option>
+          <option value="owner">Owner</option>
+          <option value="delivery">Delivery</option>
+          <option value="admin">Admin</option>
+        </select>
+      </div>
+      <div class="card">
+        <div class="card-body" style="padding:0">
+          <div class="table-wrapper">
+            <table>
+              <thead><tr><th>ID</th><th>Name</th><th>Email</th><th>Role</th><th>Joined</th><th>Status</th><th>Actions</th></tr></thead>
+              <tbody id="usersTable"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RESTAURANTS TAB -->
+    <div class="tab-content" id="tab-restaurants">
+      <div class="page-header">
+        <h1>Restaurant Management</h1>
+        <button class="btn btn-primary btn-sm" onclick="openModal('addRestModal')">+ Add Restaurant</button>
+      </div>
+      <div class="search-row">
+        <input type="text" class="form-control" id="restSearch" placeholder="Search restaurants..." oninput="filterRests()">
+        <select class="form-control" id="cuisineFilter" onchange="filterRests()" style="width:160px">
+          <option value="">All Cuisines</option>
+          <option value="Korean">Korean</option>
+          <option value="Japanese">Japanese</option>
+          <option value="Chinese">Chinese</option>
+          <option value="Pizza">Pizza</option>
+        </select>
+      </div>
+      <div class="card">
+        <div class="card-body" style="padding:0">
+          <div class="table-wrapper">
+            <table>
+              <thead><tr><th>ID</th><th>Name</th><th>Owner</th><th>Cuisine</th><th>Rating</th><th>Status</th><th>Actions</th></tr></thead>
+              <tbody id="restsTable"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ORDERS TAB -->
+    <div class="tab-content" id="tab-orders">
+      <div class="page-header"><h1>Order Management</h1></div>
+      <div class="search-row">
+        <input type="text" class="form-control" id="orderSearch" placeholder="Search by order ID or customer..." oninput="filterOrders()">
+        <select class="form-control" id="statusFilter" onchange="filterOrders()" style="width:160px">
+          <option value="">All Status</option>
+          <option value="pending">Pending</option>
+          <option value="preparing">Preparing</option>
+          <option value="delivered">Delivered</option>
+          <option value="cancelled">Cancelled</option>
+        </select>
+      </div>
+      <div class="card">
+        <div class="card-body" style="padding:0">
+          <div class="table-wrapper">
+            <table>
+              <thead><tr><th>Order ID</th><th>Customer</th><th>Restaurant</th><th>Total</th><th>Status</th><th>Date</th><th>Actions</th></tr></thead>
+              <tbody id="ordersTable"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- VIDEOS TAB -->
+    <div class="tab-content" id="tab-videos">
+      <div class="page-header"><h1>Video Advertisements</h1></div>
+      <div class="grid-3" id="videosGrid"></div>
+    </div>
+
+    <!-- REPORTS TAB -->
+    <div class="tab-content" id="tab-reports">
+      <div class="page-header"><h1>Reports & Analytics</h1></div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header">Orders by Status</div>
+          <div class="card-body" id="ordersByStatus"></div>
+        </div>
+        <div class="card">
+          <div class="card-header">Users by Role</div>
+          <div class="card-body" id="usersByRole"></div>
+        </div>
+        <div class="card">
+          <div class="card-header">Top Restaurants</div>
+          <div class="card-body" id="topRests"></div>
+        </div>
+        <div class="card">
+          <div class="card-header">Revenue This Week</div>
+          <div class="card-body" id="revenueChart"></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ADD USER MODAL -->
+<div class="modal" id="addUserModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3>Add New User</h3>
+      <button class="close-modal" onclick="closeModal('addUserModal')">✕</button>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">First Name</label><input type="text" class="form-control" id="newFirstName"></div>
+      <div class="form-group"><label class="form-label">Last Name</label><input type="text" class="form-control" id="newLastName"></div>
+    </div>
+    <div class="form-group"><label class="form-label">Email</label><input type="email" class="form-control" id="newEmail"></div>
+    <div class="form-group"><label class="form-label">Role</label>
+      <select class="form-control" id="newRole">
+        <option value="customer">Customer</option>
+        <option value="owner">Restaurant Owner</option>
+        <option value="delivery">Delivery</option>
+        <option value="admin">Admin</option>
+      </select>
+    </div>
+    <div class="form-group"><label class="form-label">Password</label><input type="password" class="form-control" id="newPassword" placeholder="Min. 8 characters"></div>
+    <button class="btn btn-primary" style="width:100%" onclick="addUser()">Create User</button>
+  </div>
+</div>
+
+<!-- ADD RESTAURANT MODAL -->
+<div class="modal" id="addRestModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3>Add New Restaurant</h3>
+      <button class="close-modal" onclick="closeModal('addRestModal')">✕</button>
+    </div>
+    <div class="form-group"><label class="form-label">Restaurant Name</label><input type="text" class="form-control" id="newRestName"></div>
+    <div class="form-group"><label class="form-label">Owner Email</label><input type="text" class="form-control" id="newRestOwner" placeholder="owner@email.com"></div>
+    <div class="form-group"><label class="form-label">Cuisine Type</label>
+      <select class="form-control" id="newRestCuisine">
+        <option>Korean</option><option>Japanese</option><option>Chinese</option><option>Pizza</option><option>Burgers</option>
+      </select>
+    </div>
+    <div class="form-group"><label class="form-label">Address</label><input type="text" class="form-control" id="newRestAddr"></div>
+    <button class="btn btn-primary" style="width:100%" onclick="addRestaurant()">Add Restaurant</button>
+  </div>
+</div>
+
+<!-- VIEW ORDER MODAL -->
+<div class="modal" id="orderModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3 id="orderModalTitle">Order Details</h3>
+      <button class="close-modal" onclick="closeModal('orderModal')">✕</button>
+    </div>
+    <div id="orderModalContent"></div>
+  </div>
+</div>
+
+<script>
+// ── DEMO DATA ─────────────────────────────────────────────
+const USERS = [
+  { id:1, firstName:'Kim',   lastName:'Minjun',  email:'kim@email.com',    role:'customer',  joined:'2024-01-15', active:true },
+  { id:2, firstName:'Lee',   lastName:'Soyeon',  email:'lee@email.com',    role:'customer',  joined:'2024-01-20', active:true },
+  { id:3, firstName:'Park',  lastName:'Junho',   email:'park@email.com',   role:'owner',     joined:'2024-02-01', active:true },
+  { id:4, firstName:'Choi',  lastName:'Jisu',    email:'choi@email.com',   role:'delivery',  joined:'2024-02-10', active:true },
+  { id:5, firstName:'Yoon',  lastName:'Dayeon',  email:'yoon@email.com',   role:'customer',  joined:'2024-02-15', active:false },
+  { id:6, firstName:'Jung',  lastName:'Haeun',   email:'jung@email.com',   role:'owner',     joined:'2024-03-01', active:true },
+  { id:7, firstName:'System',lastName:'Admin',   email:'admin@diningdoor.com', role:'admin', joined:'2024-01-01', active:true },
+];
+
+const RESTAURANTS = [
+  { id:1, name:'Mandu House',  owner:'Park Junho',  cuisine:'Korean',   rating:4.8, active:true },
+  { id:2, name:'Seoul BBQ',    owner:'Jung Haeun',  cuisine:'Korean',   rating:4.5, active:true },
+  { id:3, name:'Ramen Co.',    owner:'Park Junho',  cuisine:'Japanese', rating:4.2, active:true },
+  { id:4, name:'Pizza Bros',   owner:'Kim Minjun',  cuisine:'Pizza',    rating:4.0, active:false },
+  { id:5, name:'Sushi Park',   owner:'Jung Haeun',  cuisine:'Japanese', rating:4.7, active:true },
+];
+
+const ORDERS = [
+  { id:'#1045', customer:'Kim Minjun',  restaurant:'Seoul BBQ',   total:'₩51,000', status:'preparing',  date:'2024-06-15' },
+  { id:'#1044', customer:'Lee Soyeon',  restaurant:'Mandu House', total:'₩18,000', status:'delivered',  date:'2024-06-15' },
+  { id:'#1043', customer:'Park Junho',  restaurant:'Ramen Co.',   total:'₩33,000', status:'delivered',  date:'2024-06-14' },
+  { id:'#1042', customer:'Choi Jisu',   restaurant:'Seoul BBQ',   total:'₩22,000', status:'cancelled',  date:'2024-06-14' },
+  { id:'#1041', customer:'Yoon Dayeon', restaurant:'Sushi Park',  total:'₩45,000', status:'pending',    date:'2024-06-13' },
+  { id:'#1040', customer:'Kim Minjun',  restaurant:'Pizza Bros',  total:'₩29,000', status:'delivered',  date:'2024-06-13' },
+];
+
+const VIDEOS = [
+  { id:1, restaurant:'Seoul BBQ',   title:'Weekend BBQ Special!', views:342, active:true },
+  { id:2, restaurant:'Mandu House', title:'Fresh Mandu Every Day', views:218, active:true },
+  { id:3, restaurant:'Sushi Park',  title:'Premium Sushi Set',     views:156, active:false },
+];
+
+const ACTIVITY = [
+  { time:'12:48 PM', event:'New order placed', user:'Kim Minjun',  status:'success' },
+  { time:'12:45 PM', event:'User registered',  user:'Lee Soyeon',  status:'success' },
+  { time:'12:40 PM', event:'Order delivered',  user:'Park Junho',  status:'success' },
+  { time:'12:35 PM', event:'Video uploaded',   user:'Seoul BBQ',   status:'success' },
+  { time:'12:20 PM', event:'Order cancelled',  user:'Choi Jisu',   status:'error'   },
+];
+
+const statusBadge = {
+  pending:'badge-orange', preparing:'badge-blue',
+  delivered:'badge-green', cancelled:'badge-red'
+};
+
+// ── TAB NAVIGATION ───────────────────────────────────────
+function showTab(name) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.sidebar-item').forEach(s => s.classList.remove('active'));
+  document.getElementById(`tab-${name}`).classList.add('active');
+  event.currentTarget.classList.add('active');
+  if (name === 'users')       renderUsers(USERS);
+  if (name === 'restaurants') renderRests(RESTAURANTS);
+  if (name === 'orders')      renderOrders(ORDERS);
+  if (name === 'videos')      renderVideos();
+  if (name === 'reports')     renderReports();
+}
+
+// ── ACTIVITY LOG ─────────────────────────────────────────
+function renderActivity() {
+  document.getElementById('activityLog').innerHTML = ACTIVITY.map(a => `
+    <tr>
+      <td class="text-sm text-mid">${a.time}</td>
+      <td>${a.event}</td>
+      <td>${a.user}</td>
+      <td><span class="badge ${a.status==='success'?'badge-green':'badge-red'}">${a.status}</span></td>
+    </tr>`).join('');
+}
+
+// ── USERS ────────────────────────────────────────────────
+function renderUsers(data) {
+  document.getElementById('usersTable').innerHTML = data.map(u => `
+    <tr>
+      <td class="text-sm text-mid">#${u.id}</td>
+      <td><strong>${u.firstName} ${u.lastName}</strong></td>
+      <td class="text-sm">${u.email}</td>
+      <td><span class="badge badge-${u.role==='admin'?'red':u.role==='owner'?'blue':u.role==='delivery'?'orange':'gray'}">${u.role}</span></td>
+      <td class="text-sm text-mid">${u.joined}</td>
+      <td class="${u.active?'status-active':'status-blocked'}">${u.active?'Active':'Blocked'}</td>
+      <td>
+        <div class="action-btns">
+          <button class="btn btn-gray btn-sm" onclick="editUser(${u.id})">Edit</button>
+          <button class="btn btn-sm ${u.active?'btn-red':'btn-green'}" onclick="toggleUser(${u.id})">${u.active?'Block':'Unblock'}</button>
+          <button class="btn btn-red btn-sm" onclick="deleteUser(${u.id})">Delete</button>
+        </div>
+      </td>
+    </tr>`).join('');
+}
+
+function filterUsers() {
+  const q    = document.getElementById('userSearch').value.toLowerCase();
+  const role = document.getElementById('roleFilter').value;
+  renderUsers(USERS.filter(u =>
+    (`${u.firstName} ${u.lastName} ${u.email}`).toLowerCase().includes(q) &&
+    (!role || u.role === role)
+  ));
+}
+
+function toggleUser(id) {
+  const u = USERS.find(u => u.id === id);
+  u.active = !u.active;
+  ACTIVITY.unshift({ time: new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'}), event: u.active ? 'User unblocked' : 'User blocked', user: `${u.firstName} ${u.lastName}`, status: 'success' });
+  renderUsers(USERS);
+}
+
+function deleteUser(id) {
+  if (!confirm('Delete this user? This cannot be undone.')) return;
+  const idx = USERS.findIndex(u => u.id === id);
+  USERS.splice(idx, 1);
+  renderUsers(USERS);
+}
+
+function editUser(id) {
+  const u = USERS.find(u => u.id === id);
+  alert(`Edit user: ${u.firstName} ${u.lastName}\n(Connect backend to enable real editing)`);
+}
+
+function addUser() {
+  const firstName = document.getElementById('newFirstName').value;
+  const lastName  = document.getElementById('newLastName').value;
+  const email     = document.getElementById('newEmail').value;
+  const role      = document.getElementById('newRole').value;
+  if (!firstName || !email) { alert('Fill in all fields.'); return; }
+  USERS.push({ id: USERS.length+1, firstName, lastName, email, role, joined: new Date().toISOString().split('T')[0], active: true });
+  closeModal('addUserModal');
+  renderUsers(USERS);
+}
+
+// ── RESTAURANTS ──────────────────────────────────────────
+function renderRests(data) {
+  document.getElementById('restsTable').innerHTML = data.map(r => `
+    <tr>
+      <td class="text-sm text-mid">#${r.id}</td>
+      <td><strong>${r.name}</strong></td>
+      <td>${r.owner}</td>
+      <td><span class="badge badge-gray">${r.cuisine}</span></td>
+      <td class="text-orange font-bold">⭐ ${r.rating}</td>
+      <td class="${r.active?'status-active':'status-blocked'}">${r.active?'Active':'Suspended'}</td>
+      <td>
+        <div class="action-btns">
+          <button class="btn btn-gray btn-sm" onclick="viewRest(${r.id})">View</button>
+          <button class="btn btn-sm ${r.active?'btn-red':'btn-green'}" onclick="toggleRest(${r.id})">${r.active?'Suspend':'Activate'}</button>
+          <button class="btn btn-red btn-sm" onclick="deleteRest(${r.id})">Delete</button>
+        </div>
+      </td>
+    </tr>`).join('');
+}
+
+function filterRests() {
+  const q       = document.getElementById('restSearch').value.toLowerCase();
+  const cuisine = document.getElementById('cuisineFilter').value;
+  renderRests(RESTAURANTS.filter(r =>
+    r.name.toLowerCase().includes(q) && (!cuisine || r.cuisine === cuisine)
+  ));
+}
+
+function toggleRest(id) {
+  const r = RESTAURANTS.find(r => r.id === id);
+  r.active = !r.active;
+  renderRests(RESTAURANTS);
+}
+
+function deleteRest(id) {
+  if (!confirm('Delete this restaurant?')) return;
+  const idx = RESTAURANTS.findIndex(r => r.id === id);
+  RESTAURANTS.splice(idx, 1);
+  renderRests(RESTAURANTS);
+}
+
+function viewRest(id) {
+  const r = RESTAURANTS.find(r => r.id === id);
+  alert(`Restaurant: ${r.name}\nOwner: ${r.owner}\nCuisine: ${r.cuisine}\nRating: ${r.rating}`);
+}
+
+function addRestaurant() {
+  const name = document.getElementById('newRestName').value;
+  if (!name) { alert('Fill in restaurant name.'); return; }
+  RESTAURANTS.push({ id: RESTAURANTS.length+1, name, owner: document.getElementById('newRestOwner').value, cuisine: document.getElementById('newRestCuisine').value, rating: 0, active: true });
+  closeModal('addRestModal');
+  renderRests(RESTAURANTS);
+}
+
+// ── ORDERS ────────────────────────────────────────────────
+function renderOrders(data) {
+  document.getElementById('ordersTable').innerHTML = data.map(o => `
+    <tr>
+      <td><strong>${o.id}</strong></td>
+      <td>${o.customer}</td>
+      <td>${o.restaurant}</td>
+      <td class="font-bold text-orange">${o.total}</td>
+      <td><span class="badge ${statusBadge[o.status]}">${o.status}</span></td>
+      <td class="text-sm text-mid">${o.date}</td>
+      <td>
+        <div class="action-btns">
+          <button class="btn btn-gray btn-sm" onclick="viewOrder('${o.id}')">View</button>
+          ${o.status!=='delivered'&&o.status!=='cancelled'?`<button class="btn btn-red btn-sm" onclick="cancelOrder('${o.id}')">Cancel</button>`:''}
+        </div>
+      </td>
+    </tr>`).join('');
+}
+
+function filterOrders() {
+  const q      = document.getElementById('orderSearch').value.toLowerCase();
+  const status = document.getElementById('statusFilter').value;
+  renderOrders(ORDERS.filter(o =>
+    (o.id+o.customer).toLowerCase().includes(q) && (!status || o.status === status)
+  ));
+}
+
+function viewOrder(id) {
+  const o = ORDERS.find(o => o.id === id);
+  document.getElementById('orderModalTitle').textContent = `Order ${o.id}`;
+  document.getElementById('orderModalContent').innerHTML = `
+    <div style="display:flex;flex-direction:column;gap:0.8rem">
+      <div class="flex-between"><span class="text-mid">Customer</span><strong>${o.customer}</strong></div>
+      <div class="flex-between"><span class="text-mid">Restaurant</span><strong>${o.restaurant}</strong></div>
+      <div class="flex-between"><span class="text-mid">Total</span><strong class="text-orange">${o.total}</strong></div>
+      <div class="flex-between"><span class="text-mid">Status</span><span class="badge ${statusBadge[o.status]}">${o.status}</span></div>
+      <div class="flex-between"><span class="text-mid">Date</span><span>${o.date}</span></div>
+    </div>`;
+  openModal('orderModal');
+}
+
+function cancelOrder(id) {
+  if (!confirm('Cancel this order?')) return;
+  const o = ORDERS.find(o => o.id === id);
+  o.status = 'cancelled';
+  renderOrders(ORDERS);
+}
+
+// ── VIDEOS ────────────────────────────────────────────────
+function renderVideos() {
+  document.getElementById('videosGrid').innerHTML = VIDEOS.map(v => `
+    <div class="card">
+      <div style="background:var(--dark);height:120px;display:flex;align-items:center;justify-content:center;font-size:2.5rem">📹</div>
+      <div class="card-body">
+        <strong>${v.title}</strong>
+        <p class="text-sm text-mid mt-1">${v.restaurant}</p>
+        <p class="text-sm text-mid">👁 ${v.views} views</p>
+        <div style="display:flex;gap:0.5rem;margin-top:0.8rem">
+          <span class="badge ${v.active?'badge-green':'badge-red'}">${v.active?'Active':'Inactive'}</span>
+          <button class="btn btn-red btn-sm" onclick="removeVideo(${v.id})">Remove</button>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+function removeVideo(id) {
+  if (!confirm('Remove this video ad?')) return;
+  const idx = VIDEOS.findIndex(v => v.id === id);
+  VIDEOS.splice(idx, 1);
+  renderVideos();
+}
+
+// ── REPORTS ───────────────────────────────────────────────
+function renderReports() {
+  // Orders by status
+  const statuses = ['pending','preparing','delivered','cancelled'];
+  const statusColors = { pending:'var(--orange)', preparing:'var(--blue)', delivered:'var(--green)', cancelled:'var(--red)' };
+  document.getElementById('ordersByStatus').innerHTML = statuses.map(s => {
+    const count = ORDERS.filter(o => o.status === s).length;
+    const pct = Math.round(count/ORDERS.length*100);
+    return `<div style="margin-bottom:0.8rem">
+      <div class="flex-between text-sm" style="margin-bottom:0.3rem"><span>${s}</span><strong>${count}</strong></div>
+      <div style="background:var(--gray);border-radius:4px;height:8px"><div style="background:${statusColors[s]};width:${pct}%;height:8px;border-radius:4px"></div></div>
+    </div>`;
+  }).join('');
+
+  // Users by role
+  const roles = ['customer','owner','delivery','admin'];
+  const roleColors = { customer:'var(--blue)', owner:'var(--green)', delivery:'var(--orange)', admin:'#a855f7' };
+  document.getElementById('usersByRole').innerHTML = roles.map(r => {
+    const count = USERS.filter(u => u.role === r).length;
+    const pct = Math.round(count/USERS.length*100);
+    return `<div style="margin-bottom:0.8rem">
+      <div class="flex-between text-sm" style="margin-bottom:0.3rem"><span>${r}</span><strong>${count}</strong></div>
+      <div style="background:var(--gray);border-radius:4px;height:8px"><div style="background:${roleColors[r]};width:${pct*3}%;height:8px;border-radius:4px"></div></div>
+    </div>`;
+  }).join('');
+
+  // Top restaurants
+  document.getElementById('topRests').innerHTML = RESTAURANTS.sort((a,b) => b.rating-a.rating).slice(0,4).map((r,i) => `
+    <div class="flex-between" style="padding:0.6rem 0;border-bottom:1px solid var(--border)">
+      <div><strong style="font-size:0.9rem">${i+1}. ${r.name}</strong><p class="text-xs text-mid">${r.cuisine}</p></div>
+      <span class="text-orange font-bold">⭐ ${r.rating}</span>
+    </div>`).join('');
+
+  // Revenue chart
+  const days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  const revenue = [320,450,280,510,690,820,740];
+  const maxR = Math.max(...revenue);
+  document.getElementById('revenueChart').innerHTML = `
+    <div style="display:flex;align-items:flex-end;gap:8px;height:100px;padding-bottom:1.5rem;position:relative">
+      ${days.map((d,i) => `
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px">
+          <div style="background:${i===5?'var(--orange)':'var(--blue)'};width:100%;border-radius:4px 4px 0 0;height:${revenue[i]/maxR*80}px"></div>
+          <span style="font-size:0.7rem;color:var(--mid)">${d}</span>
+        </div>`).join('')}
+    </div>
+    <p class="text-xs text-mid">₩ Thousands · This week</p>`;
+}
+
+// ── MODAL HELPERS ────────────────────────────────────────
+function openModal(id)  { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+// Close modal on outside click
+document.querySelectorAll('.modal').forEach(m => {
+  m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); });
+});
+
+// ── INIT ─────────────────────────────────────────────────
+renderActivity();
+</script>
+</body>
+</html>
